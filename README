@@ -1,0 +1,57 @@
+# Executive Dashboard — Odoo KPI Module
+
+An Odoo module that provides an executive KPI dashboard, designed for shareholders and the board of directors. It lets you visualize key business indicators directly from Odoo's accounting data, without needing to export reports manually.
+
+## Description
+
+This module builds a business intelligence layer on top of Odoo's native accounting models (`account.move.line`, `account.move`, `account.account`), calculating and presenting financial KPIs relevant for board-level decision making.
+
+## Features
+
+- Dashboard with financial KPIs calculated in real time from accounting data
+- Views oriented toward an executive audience (shareholders, board), not just accounting
+- Built on Odoo's standard models — no need to duplicate or migrate accounting data
+
+## Requirements
+
+- Odoo 19
+- PostgreSQL 16
+- Accounting module (`account`) installed with data loaded
+
+## Installation
+
+1. Copy this folder into your Odoo instance's addons directory (`addons/` or the path configured in `addons_path`)
+2. Restart the Odoo server
+3. Enable developer mode and go to **Apps → Update Apps List**
+4. Search for "Executive Dashboard" and install the module
+
+## Local development
+
+This project uses Docker for the development environment:
+
+```bash
+docker pull odoo:19
+docker pull postgres:16
+```
+
+(Fill in the specific steps for your `docker-compose.yml` once it's set up: services, environment variables, exposed ports.)
+
+## Module structure
+
+```
+executive_dashboard/
+├── __init__.py
+├── __manifest__.py
+├── models/
+├── views/
+├── security/
+└── static/
+```
+
+## Project status
+
+Under active development — not production-ready yet.
+
+## License
+
+_To be defined._

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="shareholder_intelligence_hub.KpiCard">
+        <div class="sih-kpi-card" t-attf-class="sih-kpi-card--{{props.status}}">
+            <div class="sih-kpi-card__title" t-esc="props.title"/>
+            <div class="sih-kpi-card__value" t-esc="props.value"/>
+            <div class="sih-kpi-card__subtitle" t-if="props.subtitle" t-esc="props.subtitle"/>
+        </div>
+    </t>
+
+    <t t-name="shareholder_intelligence_hub.ChartWaterfall">
+        <div class="sih-chart-waterfall">
+            <canvas t-ref="canvas"/>
+        </div>
+    </t>
+
+    <t t-name="shareholder_intelligence_hub.Dashboard">
+        <div class="sih-dashboard">
+            <div class="sih-dashboard__header">
+                <h2>Executive Dashboard</h2>
+                <select t-if="state.companies.length"
+                        t-on-change="onCompanyChange"
+                        class="sih-dashboard__company-select">
+                    <t t-foreach="state.companies" t-as="company" t-key="company.id">
+                        <option t-att-value="company.id"
+                                t-att-selected="company.id === state.selectedCompanyId">
+                            <t t-esc="company.name"/>
+                        </option>
+                    </t>
+                </select>
+            </div>
+
+            <div t-if="state.loading" class="sih-dashboard__loading">
+                Cargando KPIs...
+            </div>
+
+            <div t-elif="!state.found" class="sih-dashboard__empty">
+                Todavía no hay un snapshot calculado para esta compañía.
+                El cron corre cada hora — espera al próximo ciclo o dispáralo
+                manualmente desde Ajustes → Técnico → Acciones Programadas.
+            </div>
+
+            <div t-else="" class="sih-dashboard__content">
+                <div class="sih-dashboard__cards">
+                    <KpiCard title="'Ingresos Acumulados (YTD)'"
+                             value="this.formatCurrency(state.data.kpis.revenue_ytd)"/>
+                    <KpiCard title="'Margen EBITDA'"
+                             value="this.formatPercent(state.data.kpis.ebitda_margin)"
+                             subtitle="'Objetivo: &gt; ' + this.formatPercent(state.data.kpis.ebitda_target)"
+                             status="state.data.kpis.ebitda_margin_on_target ? 'good' : 'warning'"/>
+                    <KpiCard title="'Flujo de Caja Disponible'"
+                             value="this.formatCurrency(state.data.kpis.cash_flow_available)"
+                             subtitle="'Runway: ' + state.data.kpis.runway_months.toFixed(1) + ' meses'"/>
+                    <KpiCard title="'ROE'"
+                             value="this.formatPercent(state.data.kpis.roe)"/>
+                </div>
+
+                <div class="sih-dashboard__waterfall">
+                    <h3>Estado de Resultados (P&amp;L)</h3>
+                    <ChartWaterfall labels="waterfallLabels" values="waterfallValues"/>
+                </div>
+            </div>
+        </div>
+    </t>
+
+</templates>

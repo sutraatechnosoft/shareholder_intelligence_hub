@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_shareholder_intelligence_hub" model="ir.actions.client">
+        <field name="name">Executive Dashboard</field>
+        <field name="tag">shareholder_intelligence_hub.dashboard</field>
+    </record>
+
+    <menuitem id="menu_shareholder_intelligence_hub_root"
+              name="Executive Dashboard"
+              sequence="5"
+              web_icon="shareholder_intelligence_hub,static/description/icon.png"
+              groups="group_executive_shareholder"/>
+
+    <menuitem id="menu_shareholder_intelligence_hub_main"
+              name="Dashboard"
+              parent="menu_shareholder_intelligence_hub_root"
+              action="action_shareholder_intelligence_hub"
+              sequence="1"
+              groups="group_executive_shareholder"/>
+
+    <!-- Vista técnica de los snapshots crudos, solo para el administrador
+         del módulo (soporte/auditoría, Sección 6.2). -->
+    <menuitem id="menu_shareholder_intelligence_hub_snapshots"
+              name="KPI Snapshots (Técnico)"
+              parent="menu_shareholder_intelligence_hub_root"
+              action="action_dashboard_kpi_snapshot"
+              sequence="99"
+              groups="group_executive_shareholder_admin"/>
+</odoo>

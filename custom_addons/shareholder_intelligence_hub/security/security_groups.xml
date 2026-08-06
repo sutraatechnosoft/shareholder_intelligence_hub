@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="module_category_shareholder_intelligence_hub" model="ir.module.category">
+            <field name="name">Executive Dashboard</field>
+            <field name="sequence">20</field>
+        </record>
+
+        <!-- Odoo 19: res.groups ya no tiene category_id directo; la
+             categoria ahora vive en res.groups.privilege, referenciado
+             desde el grupo via privilege_id. -->
+        <record id="groups_privilege_shareholder_intelligence_hub" model="res.groups.privilege">
+            <field name="name">Executive Dashboard</field>
+            <field name="category_id" ref="module_category_shareholder_intelligence_hub"/>
+        </record>
+
+        <!-- Grupo "Executive / Shareholder": acceso de solo lectura al
+             dashboard. Ver Seccion 6: restriccion estricta por grupo. -->
+        <record id="group_executive_shareholder" model="res.groups">
+            <field name="name">Executive / Shareholder (Solo Lectura)</field>
+            <field name="privilege_id" ref="groups_privilege_shareholder_intelligence_hub"/>
+            <field name="comment">Acceso de solo lectura al Executive Dashboard. No incluye acceso a la administracion contable ni a la configuracion del modulo.</field>
+        </record>
+
+        <!-- Grupo administrativo: puede configurar umbrales y forzar
+             recalculo manual del snapshot. -->
+        <record id="group_executive_shareholder_admin" model="res.groups">
+            <field name="name">Executive / Shareholder (Administrador)</field>
+            <field name="privilege_id" ref="groups_privilege_shareholder_intelligence_hub"/>
+            <field name="implied_ids" eval="[(4, ref('group_executive_shareholder'))]"/>
+            <field name="user_ids" eval="[(4, ref('base.user_admin'))]"/>
+        </record>
+    </data>
+</odoo>

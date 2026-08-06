@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_dashboard_kpi_snapshot_shareholder,dashboard.kpi.snapshot.shareholder,model_dashboard_kpi_snapshot,group_executive_shareholder,1,0,0,0
+access_dashboard_kpi_snapshot_admin,dashboard.kpi.snapshot.admin,model_dashboard_kpi_snapshot,group_executive_shareholder_admin,1,1,1,1

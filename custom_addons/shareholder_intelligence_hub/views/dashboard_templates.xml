@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Nota de compatibilidad (Sección 2 del spec, Opción B - núcleo
+        compartido): en Odoo 17/18 (OWL 2) los assets JS/XML/SCSS del
+        componente se declaran directamente en la clave 'assets' del
+        __manifest__.py y este archivo no es necesario para que el
+        componente se registre.
+
+        Se deja este template como punto de extensión explícito para la
+        línea de soporte v15/v16 (OWL 1), donde el bundle 'web.assets_backend'
+        se extiende por herencia XML en lugar de por manifest 'assets'.
+        Si el proyecto decide la Opción A (target único v17/v18), este
+        archivo puede eliminarse sin impacto.
+    -->
+    <template id="assets_backend_legacy" inherit_id="web.assets_backend" name="Shareholder Intelligence Hub Assets (legacy v15/v16)">
+        <xpath expr="." position="inside">
+            <script type="text/javascript" src="/shareholder_intelligence_hub/static/src/js/kpi_card.js"/>
+            <script type="text/javascript" src="/shareholder_intelligence_hub/static/src/js/chart_waterfall.js"/>
+            <script type="text/javascript" src="/shareholder_intelligence_hub/static/src/js/dashboard.js"/>
+            <link rel="stylesheet" type="text/scss" href="/shareholder_intelligence_hub/static/src/scss/dashboard.scss"/>
+        </xpath>
+    </template>
+</odoo>

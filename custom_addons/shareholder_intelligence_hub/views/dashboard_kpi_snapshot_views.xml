@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_dashboard_kpi_snapshot_list" model="ir.ui.view">
+        <field name="name">dashboard.kpi.snapshot.list</field>
+        <field name="model">dashboard.kpi.snapshot</field>
+        <field name="arch" type="xml">
+            <list string="KPI Snapshots">
+                <field name="snapshot_date"/>
+                <field name="company_id"/>
+                <field name="revenue_ytd"/>
+                <field name="ebitda"/>
+                <field name="ebitda_margin"/>
+                <field name="roe"/>
+                <field name="cash_flow_available"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_dashboard_kpi_snapshot_form" model="ir.ui.view">
+        <field name="name">dashboard.kpi.snapshot.form</field>
+        <field name="model">dashboard.kpi.snapshot</field>
+        <field name="arch" type="xml">
+            <form string="KPI Snapshot">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="company_id"/>
+                            <field name="snapshot_date"/>
+                            <field name="period_start"/>
+                            <field name="period_end"/>
+                        </group>
+                        <group>
+                            <field name="revenue_ytd"/>
+                            <field name="ebitda"/>
+                            <field name="ebitda_margin"/>
+                            <field name="roe"/>
+                            <field name="roa"/>
+                            <field name="cash_flow_available"/>
+                            <field name="runway_months"/>
+                        </group>
+                    </group>
+                    <group string="Antigüedad de Deuda">
+                        <group string="Cuentas por Cobrar">
+                            <field name="ar_aging_0_30"/>
+                            <field name="ar_aging_31_60"/>
+                            <field name="ar_aging_61_90"/>
+                            <field name="ar_aging_90_plus"/>
+                        </group>
+                        <group string="Cuentas por Pagar">
+                            <field name="ap_aging_0_30"/>
+                            <field name="ap_aging_31_60"/>
+                            <field name="ap_aging_61_90"/>
+                            <field name="ap_aging_90_plus"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_dashboard_kpi_snapshot" model="ir.actions.act_window">
+        <field name="name">KPI Snapshots</field>
+        <field name="res_model">dashboard.kpi.snapshot</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

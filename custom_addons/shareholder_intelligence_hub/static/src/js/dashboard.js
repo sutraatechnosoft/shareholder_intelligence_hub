@@ -3,13 +3,13 @@
 import { Component, useState, onWillStart } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { rpc } from "@web/core/network/rpc";
-import { KpiCard } from "./kpi_card";
-import { ChartWaterfall } from "./chart_waterfall";
-
+import { KpiCard } from "@shareholder_intelligence_hub/js/kpi_card";
+import { ChartWaterfall } from "@shareholder_intelligence_hub/js/chart_waterfall";
+import { ChartAging } from "@shareholder_intelligence_hub/js/chart_aging";
 
 export class ShareholderIntelligenceHubDashboard extends Component {
     static template = "shareholder_intelligence_hub.Dashboard";
-    static components = { KpiCard, ChartWaterfall };
+    static components = { KpiCard, ChartWaterfall, ChartAging };
 
     setup() {
         this.state = useState({
@@ -19,7 +19,6 @@ export class ShareholderIntelligenceHubDashboard extends Component {
             companies: [],
             selectedCompanyId: null,
         });
-
         onWillStart(async () => {
             await this._loadCompanies();
             await this._loadKpis();
@@ -50,8 +49,6 @@ export class ShareholderIntelligenceHubDashboard extends Component {
         await this._loadKpis(companyId);
     }
 
-    // --- Helpers de formato usados en el template ---
-
     formatCurrency(value) {
         if (value === undefined || value === null) return "-";
         const symbol = this.state.data?.currency_symbol || "";
@@ -65,6 +62,18 @@ export class ShareholderIntelligenceHubDashboard extends Component {
         return `${value.toFixed(1)}%`;
     }
 
+    formatYoY(value) {
+        if (value === undefined || value === null) return "YoY: -";
+        const sign = value >= 0 ? "+" : "";
+        return `YoY: ${sign}${value.toFixed(1)}% vs año anterior`;
+    }
+
+    formatYoYPoints(value) {
+        if (value === undefined || value === null) return "YoY: -";
+        const sign = value >= 0 ? "+" : "";
+        return `YoY: ${sign}${value.toFixed(1)} p.p. vs año anterior`;
+    }
+
     get waterfallLabels() {
         return ["Ingresos", "COGS", "Margen Bruto", "OPEX", "EBITDA"];
     }
@@ -72,8 +81,19 @@ export class ShareholderIntelligenceHubDashboard extends Component {
     get waterfallValues() {
         const w = this.state.data?.pnl_waterfall;
         if (!w) return [];
-        // Deltas relativos para el efecto cascada.
-        return [w.revenue, w.cogs, 0, w.opex, 0];
+        return [w.revenue, w.cogs, w.gross_margin, w.opex, w.ebitda];
+    }
+
+    get agingLabels() {
+        return ["0-30 días", "31-60 días", "61-90 días", "+90 días"];
+    }
+
+    get arAgingValues() {
+        return this.state.data?.aging?.receivable || [0, 0, 0, 0];
+    }
+
+    get apAgingValues() {
+        return this.state.data?.aging?.payable || [0, 0, 0, 0];
     }
 }
 

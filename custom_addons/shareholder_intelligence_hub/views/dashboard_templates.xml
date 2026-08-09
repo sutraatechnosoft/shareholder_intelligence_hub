@@ -1,24 +1,87 @@
-<?xml version="1.0" encoding="utf-8"?>
-<odoo>
-    <!--
-        Nota de compatibilidad (Sección 2 del spec, Opción B - núcleo
-        compartido): en Odoo 17/18 (OWL 2) los assets JS/XML/SCSS del
-        componente se declaran directamente en la clave 'assets' del
-        __manifest__.py y este archivo no es necesario para que el
-        componente se registre.
-
-        Se deja este template como punto de extensión explícito para la
-        línea de soporte v15/v16 (OWL 1), donde el bundle 'web.assets_backend'
-        se extiende por herencia XML en lugar de por manifest 'assets'.
-        Si el proyecto decide la Opción A (target único v17/v18), este
-        archivo puede eliminarse sin impacto.
-    -->
-    <template id="assets_backend_legacy" inherit_id="web.assets_backend" name="Shareholder Intelligence Hub Assets (legacy v15/v16)">
-        <xpath expr="." position="inside">
-            <script type="text/javascript" src="/shareholder_intelligence_hub/static/src/js/kpi_card.js"/>
-            <script type="text/javascript" src="/shareholder_intelligence_hub/static/src/js/chart_waterfall.js"/>
-            <script type="text/javascript" src="/shareholder_intelligence_hub/static/src/js/dashboard.js"/>
-            <link rel="stylesheet" type="text/scss" href="/shareholder_intelligence_hub/static/src/scss/dashboard.scss"/>
-        </xpath>
-    </template>
-</odoo>
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="shareholder_intelligence_hub.KpiCard">
+        <div class="sih-kpi-card" t-attf-class="sih-kpi-card--{{props.status}}">
+            <div class="sih-kpi-card__title" t-esc="props.title"/>
+            <div class="sih-kpi-card__value" t-esc="props.value"/>
+            <div class="sih-kpi-card__subtitle" t-if="props.subtitle" t-esc="props.subtitle"/>
+        </div>
+    </t>
+    <t t-name="shareholder_intelligence_hub.ChartWaterfall">
+        <div class="sih-chart-waterfall">
+            <canvas t-ref="canvas"/>
+        </div>
+    </t>
+    <t t-name="shareholder_intelligence_hub.ChartAging">
+        <div class="sih-chart-aging">
+            <canvas t-ref="canvas"/>
+        </div>
+    </t>
+    <t t-name="shareholder_intelligence_hub.Dashboard">
+        <div class="sih-dashboard">
+            <div class="sih-dashboard__header">
+                <h2>Executive Dashboard</h2>
+                <select t-if="state.companies.length"
+                        t-on-change="onCompanyChange"
+                        class="sih-dashboard__company-select">
+                    <t t-foreach="state.companies" t-as="company" t-key="company.id">
+                        <option t-att-value="company.id"
+                                t-att-selected="company.id === state.selectedCompanyId">
+                            <t t-esc="company.name"/>
+                        </option>
+                    </t>
+                </select>
+            </div>
+            <div t-if="state.loading" class="sih-dashboard__loading">
+                Cargando KPIs...
+            </div>
+            <div t-elif="!state.found" class="sih-dashboard__empty">
+                Todavía no hay un snapshot calculado para esta compañía.
+                El cron corre cada hora — espera al próximo ciclo o dispáralo
+                manualmente desde Ajustes → Técnico → Acciones Programadas.
+            </div>
+            <div t-else="" class="sih-dashboard__content">
+                <div class="sih-dashboard__cards">
+                    <KpiCard title="'Ingresos Acumulados (YTD)'"
+                             value="this.formatCurrency(state.data.kpis.revenue_ytd)"
+                             subtitle="this.formatYoY(state.data.kpis.revenue_yoy_growth)"/>
+                    <KpiCard title="'Margen EBITDA'"
+                             value="this.formatPercent(state.data.kpis.ebitda_margin)"
+                             subtitle="'Objetivo: &gt; ' + this.formatPercent(state.data.kpis.ebitda_target) + ' · ' + this.formatYoY(state.data.kpis.ebitda_yoy_growth)"
+                             status="state.data.kpis.ebitda_margin_on_target ? 'good' : 'warning'"/>
+                    <KpiCard title="'Flujo de Caja Disponible'"
+                             value="this.formatCurrency(state.data.kpis.cash_flow_available)"
+                             subtitle="'Runway: ' + state.data.kpis.runway_months.toFixed(1) + ' meses' + ' · ' + this.formatYoY(state.data.kpis.cash_flow_yoy_growth)"/>
+                    <KpiCard title="'ROE'"
+                             value="this.formatPercent(state.data.kpis.roe)"
+                             subtitle="this.formatYoYPoints(state.data.kpis.roe_yoy_delta)"/>
+                </div>
+                <div class="sih-dashboard__waterfall">
+                    <h3>Estado de Resultados (P&amp;L)</h3>
+                    <ChartWaterfall labels="waterfallLabels" values="waterfallValues"/>
+                </div>
+                <div class="sih-dashboard__aging row g-3 mt-2">
+                    <div class="col-md-6">
+                        <div class="card p-3">
+                            <div style="height: 250px;">
+                                <ChartAging title="'Antigüedad Cuentas por Cobrar (AR)'"
+                                            labels="agingLabels"
+                                            values="arAgingValues"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card p-3">
+                            <div style="height: 250px;">
+                                <ChartAging title="'Antigüedad Cuentas por Pagar (AP)'"
+                                            labels="agingLabels"
+                                            values="apAgingValues"
+                                            color="'#dc3545'"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

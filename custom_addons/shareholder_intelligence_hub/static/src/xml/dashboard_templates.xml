@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
-
     <t t-name="shareholder_intelligence_hub.KpiCard">
         <div class="sih-kpi-card" t-attf-class="sih-kpi-card--{{props.status}}">
             <div class="sih-kpi-card__title" t-esc="props.title"/>
@@ -8,13 +7,16 @@
             <div class="sih-kpi-card__subtitle" t-if="props.subtitle" t-esc="props.subtitle"/>
         </div>
     </t>
-
     <t t-name="shareholder_intelligence_hub.ChartWaterfall">
         <div class="sih-chart-waterfall">
             <canvas t-ref="canvas"/>
         </div>
     </t>
-
+    <t t-name="shareholder_intelligence_hub.ChartAging">
+        <div class="sih-chart-aging">
+            <canvas t-ref="canvas"/>
+        </div>
+    </t>
     <t t-name="shareholder_intelligence_hub.Dashboard">
         <div class="sih-dashboard">
             <div class="sih-dashboard__header">
@@ -30,38 +32,56 @@
                     </t>
                 </select>
             </div>
-
             <div t-if="state.loading" class="sih-dashboard__loading">
                 Cargando KPIs...
             </div>
-
             <div t-elif="!state.found" class="sih-dashboard__empty">
                 Todavía no hay un snapshot calculado para esta compañía.
                 El cron corre cada hora — espera al próximo ciclo o dispáralo
                 manualmente desde Ajustes → Técnico → Acciones Programadas.
             </div>
-
             <div t-else="" class="sih-dashboard__content">
                 <div class="sih-dashboard__cards">
                     <KpiCard title="'Ingresos Acumulados (YTD)'"
-                             value="this.formatCurrency(state.data.kpis.revenue_ytd)"/>
+                             value="this.formatCurrency(state.data.kpis.revenue_ytd)"
+                             subtitle="this.formatYoY(state.data.kpis.revenue_yoy_growth)"/>
                     <KpiCard title="'Margen EBITDA'"
                              value="this.formatPercent(state.data.kpis.ebitda_margin)"
-                             subtitle="'Objetivo: &gt; ' + this.formatPercent(state.data.kpis.ebitda_target)"
+                             subtitle="'Objetivo: &gt; ' + this.formatPercent(state.data.kpis.ebitda_target) + ' · ' + this.formatYoY(state.data.kpis.ebitda_yoy_growth)"
                              status="state.data.kpis.ebitda_margin_on_target ? 'good' : 'warning'"/>
                     <KpiCard title="'Flujo de Caja Disponible'"
                              value="this.formatCurrency(state.data.kpis.cash_flow_available)"
-                             subtitle="'Runway: ' + state.data.kpis.runway_months.toFixed(1) + ' meses'"/>
+                             subtitle="'Runway: ' + state.data.kpis.runway_months.toFixed(1) + ' meses' + ' · ' + this.formatYoY(state.data.kpis.cash_flow_yoy_growth)"/>
                     <KpiCard title="'ROE'"
-                             value="this.formatPercent(state.data.kpis.roe)"/>
+                             value="this.formatPercent(state.data.kpis.roe)"
+                             subtitle="this.formatYoYPoints(state.data.kpis.roe_yoy_delta)"/>
                 </div>
-
                 <div class="sih-dashboard__waterfall">
                     <h3>Estado de Resultados (P&amp;L)</h3>
                     <ChartWaterfall labels="waterfallLabels" values="waterfallValues"/>
                 </div>
+                <div class="sih-dashboard__aging row g-3 mt-2">
+                    <div class="col-md-6">
+                        <div class="card p-3">
+                            <div style="height: 250px;">
+                                <ChartAging title="'Antigüedad Cuentas por Cobrar (AR)'"
+                                            labels="agingLabels"
+                                            values="arAgingValues"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card p-3">
+                            <div style="height: 250px;">
+                                <ChartAging title="'Antigüedad Cuentas por Pagar (AP)'"
+                                            labels="agingLabels"
+                                            values="apAgingValues"
+                                            color="'#dc3545'"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </t>
-
 </templates>

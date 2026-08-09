@@ -1,24 +1,8 @@
 /** @odoo-module **/
 
 import { Component, useRef, onMounted, onWillUnmount, onWillUpdateProps } from "@odoo/owl";
+import { loadJS } from "@web/core/assets";
 
-/**
- * Wrapper de Chart.js para el gráfico de cascada del Estado de Resultados
- * (Sección 4.2: "Estado de Resultados (P&L) — Waterfall Chart").
- *
- * Requiere que Chart.js esté cargado globalmente (window.Chart). Odoo trae
- * Chart.js empaquetado en /web/static/lib/Chart/Chart.js en varias
- * versiones; si tu build no lo incluye, agrégalo a la clave 'assets' del
- * manifest o cárgalo desde un CDN permitido.
- *
- * Chart.js no tiene un tipo "waterfall" nativo: se simula con un stacked
- * bar chart donde la primera serie es transparente (el "piso" de cada
- * barra) y la segunda es el valor visible.
- *
- * Props:
- *  - labels (Array<String>)  ej. ['Ingresos','COGS','Margen Bruto','OPEX','EBITDA']
- *  - values (Array<Number>)  deltas: positivos suman, negativos restan
- */
 export class ChartWaterfall extends Component {
     static template = "shareholder_intelligence_hub.ChartWaterfall";
     static props = {
@@ -30,8 +14,13 @@ export class ChartWaterfall extends Component {
         this.canvasRef = useRef("canvas");
         this.chart = null;
 
-        onMounted(() => this._renderChart());
+        onMounted(async () => {
+            await loadJS("/web/static/lib/Chart/Chart.js").catch(() => {});
+            this._renderChart();
+        });
+
         onWillUpdateProps((nextProps) => this._renderChart(nextProps));
+
         onWillUnmount(() => {
             if (this.chart) {
                 this.chart.destroy();
@@ -40,34 +29,62 @@ export class ChartWaterfall extends Component {
     }
 
     _buildWaterfallData(labels, values) {
-        let cumulative = 0;
+        let runningTotal = 0;
         const floors = [];
         const bars = [];
-        for (const v of values) {
-            const start = cumulative;
-            const end = cumulative + v;
-            floors.push(Math.min(start, end));
-            bars.push(Math.abs(v));
-            cumulative = end;
-        }
-        return { floors, bars };
+        const isTotalFlags = [];
+
+        (values || []).forEach((v, index) => {
+            const label = (labels && labels[index]) ? labels[index].toLowerCase() : "";
+            
+            // Detecta si es una columna de subtotal/total
+            const isTotal = label.includes("margen bruto") || label.includes("ebitda");
+            isTotalFlags.push(isTotal);
+
+            if (isTotal) {
+                // Las barras de total nacen en 0 y suben hasta su valor real
+                floors.push(0);
+                bars.push(Math.abs(v));
+                runningTotal = v;
+            } else {
+                // Las barras de variación (COGS/OPEX) flotan desde el acumulado anterior
+                const start = runningTotal;
+                const end = runningTotal + v;
+                floors.push(Math.min(start, end));
+                bars.push(Math.abs(v));
+                runningTotal = end;
+            }
+        });
+
+        return { floors, bars, isTotalFlags };
     }
 
     _renderChart(props) {
         const { labels, values } = props || this.props;
-        if (!window.Chart || !this.canvasRef.el) {
+        const ChartLib = window.Chart;
+
+        if (!ChartLib || !this.canvasRef.el) {
             return;
         }
-        const { floors, bars } = this._buildWaterfallData(labels, values);
+
+        const { floors, bars, isTotalFlags } = this._buildWaterfallData(labels, values);
 
         if (this.chart) {
             this.chart.destroy();
         }
 
-        this.chart = new window.Chart(this.canvasRef.el.getContext("2d"), {
+        // Asignación de colores: Azul/Gris para totales, Verde para aumentos, Rojo para costos/gastos
+        const barColors = (values || []).map((v, i) => {
+            if (isTotalFlags[i]) {
+                return "#1E88E5"; // Azul para destacar subtotales y totales (Margen Bruto y EBITDA)
+            }
+            return v >= 0 ? "#2E7D32" : "#C62828"; // Verde para ingresos/positivos, Rojo para egresos
+        });
+
+        this.chart = new ChartLib(this.canvasRef.el.getContext("2d"), {
             type: "bar",
             data: {
-                labels,
+                labels: labels || [],
                 datasets: [
                     {
                         label: "floor",
@@ -78,18 +95,21 @@ export class ChartWaterfall extends Component {
                     {
                         label: "valor",
                         data: bars,
-                        backgroundColor: values.map((v) =>
-                            v >= 0 ? "#2E7D32" : "#C62828"
-                        ),
+                        backgroundColor: barColors,
                         stack: "waterfall",
                     },
                 ],
             },
             options: {
+                responsive: true,
+                maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
                     x: { stacked: true },
-                    y: { stacked: true },
+                    y: { 
+                        stacked: true,
+                        beginAtZero: true
+                    },
                 },
             },
         });

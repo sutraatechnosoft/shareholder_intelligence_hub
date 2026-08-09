@@ -31,18 +31,14 @@ Depende unicamente del modulo 'account' (Community), para no atarse a
 funcionalidades Enterprise. Ver Seccion 2 del spec para la estrategia de
 compatibilidad multi-version (v15-v18).
     """,
-    'author': 'Tu Empresa',
+    'author': 'Sutraa Technosoft',
     'website': 'https://tuempresa.com',
     'license': 'LGPL-3',
-    # Dependencia deliberadamente minima: solo 'account' (Community).
-    # No se depende de 'account_reports' ni otros modulos Enterprise.
     'depends': [
         'account',
         'web',
     ],
     'data': [
-        # Seguridad primero: grupos antes que ir.model.access.csv (que los
-        # referencia) y antes que las vistas/menus (que los usan en groups=).
         'security/security_groups.xml',
         'security/ir.model.access.csv',
         'security/dashboard_record_rules.xml',
@@ -50,15 +46,20 @@ compatibilidad multi-version (v15-v18).
         'views/dashboard_kpi_snapshot_views.xml',
         'views/dashboard_menus.xml',
     ],
-    # Assets para Odoo 17/18 (OWL 2). Para v15/v16 ver la nota de
-    # compatibilidad en views/dashboard_templates.xml.
+
     'assets': {
         'web.assets_backend': [
+            # 1. Estilos primero
+            'shareholder_intelligence_hub/static/src/scss/dashboard.scss',
+
+            # 2. Plantillas XML (Cargadas ANTES del JS para que OWL reconozca los t-name)
+            'shareholder_intelligence_hub/static/src/xml/dashboard_templates.xml',
+
+            # 3. Componentes JS ordenados por dependencia
             'shareholder_intelligence_hub/static/src/js/kpi_card.js',
             'shareholder_intelligence_hub/static/src/js/chart_waterfall.js',
+            'shareholder_intelligence_hub/static/src/js/chart_aging.js',
             'shareholder_intelligence_hub/static/src/js/dashboard.js',
-            'shareholder_intelligence_hub/static/src/xml/dashboard_templates.xml',
-            'shareholder_intelligence_hub/static/src/scss/dashboard.scss',
         ],
     },
     'installable': True,

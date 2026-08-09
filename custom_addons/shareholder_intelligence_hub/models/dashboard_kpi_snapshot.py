@@ -3,12 +3,9 @@ import logging
 
 from odoo import api, fields, models
 
-
-
 _logger = logging.getLogger(__name__)
 
 # Tipos de cuenta (account_type) usados para clasificar sin mapeo manual.
-# Ver Sección 3 del spec: account.account -> account_type.
 REVENUE_TYPES = ('income', 'income_other')
 COGS_TYPES = ('expense_direct_cost',)
 OPEX_TYPES = ('expense',)
@@ -50,6 +47,15 @@ class DashboardKpiSnapshot(models.Model):
     revenue_ytd_prev_year = fields.Monetary(string='Ingresos YTD Año Anterior')
     revenue_yoy_growth = fields.Float(string='Crecimiento YoY (%)')
 
+    ebitda_prev_year = fields.Monetary(string='EBITDA Año Anterior')
+    ebitda_yoy_growth = fields.Float(string='Crecimiento EBITDA YoY (%)')
+
+    cash_flow_available_prev_year = fields.Monetary(string='Flujo de Caja Año Anterior')
+    cash_flow_yoy_growth = fields.Float(string='Crecimiento Flujo de Caja YoY (%)')
+
+    roe_prev_year = fields.Float(string='ROE Año Anterior (%)')
+    roe_yoy_delta = fields.Float(string='Variación ROE YoY (p.p.)')
+
     cogs = fields.Monetary(string='COGS')
     gross_margin = fields.Monetary(string='Margen Bruto')
     opex = fields.Monetary(string='OPEX (excl. D&A)')
@@ -84,8 +90,6 @@ class DashboardKpiSnapshot(models.Model):
 
     computed_at = fields.Datetime(string='Calculado el', default=fields.Datetime.now)
 
-    # Comparación contra el umbral configurable (ver models/res_company.py
-    # y Settings vía models/dashboard_config.py).
     ebitda_target = fields.Float(
         related='company_id.dashboard_ebitda_target', readonly=True,
         string='Objetivo EBITDA (%)',
@@ -100,29 +104,41 @@ class DashboardKpiSnapshot(models.Model):
         for rec in self:
             rec.ebitda_margin_on_target = rec.ebitda_margin >= rec.ebitda_target
 
-    """_sql_constraints = [
-        (
-            'company_date_uniq',
-            'unique(company_id, snapshot_date)',
-            'Ya existe un snapshot de KPIs para esta compañía en esta fecha.',
-        ),
-    ]"""
-
     _company_date_uniq = models.Constraint(
         'UNIQUE(company_id, snapshot_date)',
         'Ya existe un snapshot de KPIs para esta compañía en esta fecha.'
     )
 
     # ------------------------------------------------------------------
-    # Punto de entrada del cron (ver data/ir_cron_data.xml)
+    # AUTO-CÁLCULO AL CREAR Y BOTÓN MANUAL (NUEVA LÓGICA UI)
+    # ------------------------------------------------------------------
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            snapshot_date = fields.Date.from_string(vals.get('snapshot_date')) or fields.Date.context_today(self)
+            if not vals.get('period_start'):
+                vals['period_start'] = snapshot_date.replace(month=1, day=1)
+            if not vals.get('period_end'):
+                vals['period_end'] = snapshot_date
+
+        records = super().create(vals_list)
+        records.action_recompute_kpis()
+        return records
+
+    def action_recompute_kpis(self):
+        """Método público invocado por el botón en la vista o tras el create"""
+        for rec in self:
+            p_start = rec.period_start or rec.snapshot_date.replace(month=1, day=1)
+            p_end = rec.period_end or rec.snapshot_date
+            vals = rec._compute_kpi_values(rec.company_id, p_start, p_end)
+            rec.write(vals)
+        return True
+
+    # ------------------------------------------------------------------
+    # Punto de entrada del cron
     # ------------------------------------------------------------------
     @api.model
     def _cron_compute_kpi_snapshot(self):
-        """Recalcula el snapshot del día para cada compañía activa.
-
-        Este es el mecanismo que reemplaza la agregación en vivo sobre
-        account.move.line en cada carga del dashboard (Sección 3.1.1).
-        """
         companies = self.env['res.company'].search([])
         for company in companies:
             try:
@@ -135,7 +151,7 @@ class DashboardKpiSnapshot(models.Model):
 
     def _compute_kpis_for_company(self, company):
         today = fields.Date.context_today(self)
-        period_start = today.replace(month=1, day=1)  # Acumulado YTD
+        period_start = today.replace(month=1, day=1)
 
         vals = self._compute_kpi_values(company, period_start, today)
 
@@ -156,11 +172,10 @@ class DashboardKpiSnapshot(models.Model):
             self.create(vals)
 
     # ------------------------------------------------------------------
-    # Cálculo de KPIs
+    # Cálculo de KPIs (Lógica Contable)
     # ------------------------------------------------------------------
+
     def _compute_kpi_values(self, company, period_start, period_end):
-        # Domain base: SIEMPRE filtrar asientos posteados (Sección 3.1.1).
-        # Los borradores no deben contaminar cifras mostradas a la junta.
         flow_domain = [
             ('company_id', '=', company.id),
             ('move_id.state', '=', 'posted'),
@@ -175,14 +190,57 @@ class DashboardKpiSnapshot(models.Model):
         opex_excl_da = opex_total - da
 
         gross_margin = revenue - cogs
-        # EBITDA aislando D&A explícitamente (corrección Sección 4.3):
-        # antes era un margen operativo (EBIT aprox.), no un EBITDA real.
         ebitda = gross_margin - opex_excl_da
         ebitda_margin = (ebitda / revenue * 100.0) if revenue else 0.0
         net_profit = revenue - cogs - opex_total
 
-        # Domain de balance: saldo vivo a la fecha de corte (no acumulado
-        # del período), para cuentas de activo/pasivo/patrimonio.
+        # ------------------------------------------------------------
+        # Crecimiento YoY de Ingresos (mismo período, año anterior)
+        # ------------------------------------------------------------
+        try:
+            prev_period_start = period_start.replace(year=period_start.year - 1)
+        except ValueError:
+            # 29 de febrero en año bisiesto -> cae al 28 en año no bisiesto
+            prev_period_start = period_start.replace(
+                year=period_start.year - 1, day=28
+            )
+        try:
+            prev_period_end = period_end.replace(year=period_end.year - 1)
+        except ValueError:
+            prev_period_end = period_end.replace(
+                year=period_end.year - 1, day=28
+            )
+
+        prev_flow_domain = [
+            ('company_id', '=', company.id),
+            ('move_id.state', '=', 'posted'),
+            ('date', '>=', prev_period_start),
+            ('date', '<=', prev_period_end),
+        ]
+        revenue_prev_year = self._sum_by_account_type(prev_flow_domain, REVENUE_TYPES)
+        revenue_yoy_growth = (
+            ((revenue - revenue_prev_year) / revenue_prev_year) * 100.0
+        ) if revenue_prev_year else 0.0
+
+        cogs_prev_year = self._sum_by_account_type(prev_flow_domain, COGS_TYPES)
+        opex_total_prev_year = self._sum_by_account_type(prev_flow_domain, OPEX_TYPES)
+        da_prev_year = self._sum_by_account_type(prev_flow_domain, DA_TYPES)
+        opex_excl_da_prev_year = opex_total_prev_year - da_prev_year
+        gross_margin_prev_year = revenue_prev_year - cogs_prev_year
+        ebitda_prev_year = gross_margin_prev_year - opex_excl_da_prev_year
+        ebitda_yoy_growth = (
+            ((ebitda - ebitda_prev_year) / ebitda_prev_year) * 100.0
+        ) if ebitda_prev_year else 0.0
+
+        # ------------------------------------------------------------
+        # Dominio de balance del año anterior (a la misma fecha de corte)
+        # ------------------------------------------------------------
+        prev_balance_domain = [
+            ('company_id', '=', company.id),
+            ('move_id.state', '=', 'posted'),
+            ('date', '<=', prev_period_end),
+        ]
+
         balance_domain = [
             ('company_id', '=', company.id),
             ('move_id.state', '=', 'posted'),
@@ -202,11 +260,43 @@ class DashboardKpiSnapshot(models.Model):
         monthly_burn = (opex_excl_da / 12.0) if opex_excl_da else 0.0
         runway_months = (cash_balance / monthly_burn) if monthly_burn else 0.0
 
+        # ------------------------------------------------------------
+        # Flujo de Caja Disponible - Año Anterior
+        # ------------------------------------------------------------
+        cash_balance_prev_year = self._sum_by_account_type(prev_balance_domain, CASH_TYPES)
+        ar_total_prev_year = self._sum_by_account_type(prev_balance_domain, RECEIVABLE_TYPES)
+        ap_total_prev_year = self._sum_by_account_type(prev_balance_domain, PAYABLE_TYPES)
+        cash_flow_available_prev_year = (
+            cash_balance_prev_year + ar_total_prev_year - ap_total_prev_year
+        )
+        cash_flow_yoy_growth = (
+            ((cash_flow_available - cash_flow_available_prev_year)
+             / cash_flow_available_prev_year) * 100.0
+        ) if cash_flow_available_prev_year else 0.0
+
+        # ------------------------------------------------------------
+        # ROE - Año Anterior (variación en puntos porcentuales)
+        # ------------------------------------------------------------
+        total_equity_prev_year = self._sum_by_account_type(prev_balance_domain, EQUITY_TYPES)
+        net_profit_prev_year = revenue_prev_year - cogs_prev_year - opex_total_prev_year
+        roe_prev_year = (
+            (net_profit_prev_year / total_equity_prev_year * 100.0)
+        ) if total_equity_prev_year else 0.0
+        roe_yoy_delta = roe - roe_prev_year
+
         ar_aging = self._compute_aging(company, period_end, RECEIVABLE_TYPES)
         ap_aging = self._compute_aging(company, period_end, PAYABLE_TYPES)
 
         return {
             'revenue_ytd': revenue,
+            'revenue_ytd_prev_year': revenue_prev_year,
+            'revenue_yoy_growth': revenue_yoy_growth,
+            'ebitda_prev_year': ebitda_prev_year,
+            'ebitda_yoy_growth': ebitda_yoy_growth,
+            'cash_flow_available_prev_year': cash_flow_available_prev_year,
+            'cash_flow_yoy_growth': cash_flow_yoy_growth,
+            'roe_prev_year': roe_prev_year,
+            'roe_yoy_delta': roe_yoy_delta,
             'cogs': cogs,
             'gross_margin': gross_margin,
             'opex': opex_excl_da,
@@ -235,9 +325,6 @@ class DashboardKpiSnapshot(models.Model):
         }
 
     def _sum_by_account_type(self, domain, account_types):
-        """Suma agregada (read_group) de account.move.line.balance,
-        filtrando por account_type. Usa índices sobre company_id/date/
-        account_type (Sección 3.1.1)."""
         full_domain = domain + [('account_id.account_type', 'in', list(account_types))]
         result = self.env['account.move.line'].read_group(
             full_domain, ['balance:sum'], [],
@@ -247,8 +334,6 @@ class DashboardKpiSnapshot(models.Model):
         return 0.0
 
     def _compute_aging(self, company, as_of_date, account_types):
-        """Antigüedad de saldos no conciliados, por tramos de días desde
-        el vencimiento (date_maturity), para CxC/CxP (Sección 4.2)."""
         AccountMoveLine = self.env['account.move.line']
         domain = [
             ('company_id', '=', company.id),

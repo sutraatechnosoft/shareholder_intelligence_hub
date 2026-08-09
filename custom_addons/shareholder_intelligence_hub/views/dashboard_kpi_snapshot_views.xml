@@ -21,6 +21,15 @@
         <field name="model">dashboard.kpi.snapshot</field>
         <field name="arch" type="xml">
             <form string="KPI Snapshot">
+                <!-- BARRA SUPERIOR CON BOTÓN DE RECÁLCULO -->
+                <header>
+                    <button name="action_recompute_kpis" 
+                            string="Recalcular KPIs" 
+                            type="object" 
+                            class="oe_highlight" 
+                            icon="fa-refresh"/>
+                </header>
+
                 <sheet>
                     <group>
                         <group>
@@ -30,27 +39,27 @@
                             <field name="period_end"/>
                         </group>
                         <group>
-                            <field name="revenue_ytd"/>
-                            <field name="ebitda"/>
-                            <field name="ebitda_margin"/>
-                            <field name="roe"/>
-                            <field name="roa"/>
-                            <field name="cash_flow_available"/>
-                            <field name="runway_months"/>
+                            <field name="revenue_ytd" readonly="1"/>
+                            <field name="ebitda" readonly="1"/>
+                            <field name="ebitda_margin" readonly="1"/>
+                            <field name="roe" readonly="1"/>
+                            <field name="roa" readonly="1"/>
+                            <field name="cash_flow_available" readonly="1"/>
+                            <field name="runway_months" readonly="1"/>
                         </group>
                     </group>
                     <group string="Antigüedad de Deuda">
                         <group string="Cuentas por Cobrar">
-                            <field name="ar_aging_0_30"/>
-                            <field name="ar_aging_31_60"/>
-                            <field name="ar_aging_61_90"/>
-                            <field name="ar_aging_90_plus"/>
+                            <field name="ar_aging_0_30" readonly="1"/>
+                            <field name="ar_aging_31_60" readonly="1"/>
+                            <field name="ar_aging_61_90" readonly="1"/>
+                            <field name="ar_aging_90_plus" readonly="1"/>
                         </group>
                         <group string="Cuentas por Pagar">
-                            <field name="ap_aging_0_30"/>
-                            <field name="ap_aging_31_60"/>
-                            <field name="ap_aging_61_90"/>
-                            <field name="ap_aging_90_plus"/>
+                            <field name="ap_aging_0_30" readonly="1"/>
+                            <field name="ap_aging_31_60" readonly="1"/>
+                            <field name="ap_aging_61_90" readonly="1"/>
+                            <field name="ap_aging_90_plus" readonly="1"/>
                         </group>
                     </group>
                 </sheet>

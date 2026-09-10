@@ -1,67 +1,83 @@
 # -*- coding: utf-8 -*-
+
 {
-    'name': 'Shareholder Intelligence Hub',
+    'name': 'Kpix for Odoo',
     'version': '19.0.1.0.0',
-    'category': 'Accounting/Accounting',
-    'summary': (
-        'Dashboard ejecutivo de KPIs financieros (EBITDA, ROE, ROA, aging, '
-        'cash flow) para junta directiva y accionistas'
-    ),
+    'summary': 'Board-ready financial dashboard with pre-calculated KPIs',
+
     'description': """
-Shareholder Intelligence Hub
-=============================
+KPIX Dashboard
 
-Consolida el motor contable de Odoo (account.move.line, account.move,
-account.account) en un modelo de reporting precalculado
-(dashboard.kpi.snapshot), evitando agregaciones en vivo sobre el ledger
-en cada carga de pantalla (ver Seccion 3.1.1 de la especificacion tecnica).
+Turn Odoo's accounting data into a board-ready financial dashboard
+without recalculating large amounts of accounting data on every page load.
 
-Reglas de negocio clave implementadas:
-- Todas las queries de KPIs filtran obligatoriamente state = 'posted'.
-- EBITDA se calcula aislando D&A (depreciacion y amortizacion) del resto
-  del OPEX, en vez de un margen operativo aproximado (Seccion 4.3).
-- Snapshot horario/diario via cron (ir.cron) por compania, con indices
-  sobre company_id, date y account_type.
-- Umbrales configurables por compania (objetivo EBITDA, runway objetivo)
-  expuestos en Settings (Seccion 4.1 / 8).
-- Seguridad granular: grupo Executive/Shareholder de solo lectura +
-  ir.rule por compania a nivel de registro, no solo de menu (Seccion 6.2).
+Key Features
+------------
+- Pre-calculated KPI snapshots.
+- Revenue, gross margin, EBITDA, net profit, ROE and ROA.
+- D&A properly isolated from OPEX for EBITDA calculation.
+- Year-over-year comparisons.
+- Accounts receivable and payable aging in 30-day brackets.
+- Runway estimate based on current cash burn.
+- Automatic KPI snapshots through scheduled actions.
+- Configurable EBITDA and runway targets per company.
+- Read-only Executive/Shareholder security group.
+- Per-company record-level access.
+- Optimized for large accounting datasets.
 
-Depende unicamente del modulo 'account' (Community), para no atarse a
-funcionalidades Enterprise. Ver Seccion 2 del spec para la estrategia de
-compatibilidad multi-version (v15-v18).
-    """,
+Performance
+-----------
+KPIs are pre-computed and stored in snapshot records rather than
+being recalculated from account.move.line every time the dashboard
+is opened.
+
+Requirements
+------------
+Depends on the standard Odoo Account module.
+No Enterprise dependency is required.
+""",
+
     'author': 'Sutraa Technosoft',
-    'website': 'https://tuempresa.com',
-    'license': 'LGPL-3',
+    'website': 'https://sutraatechnosoft.com',
+    'license': 'OPL-1',
+
+    'category': 'Accounting/Accounting',
+
     'depends': [
         'account',
         'web',
     ],
+
     'data': [
         'security/security_groups.xml',
         'security/ir.model.access.csv',
         'security/dashboard_record_rules.xml',
+
         'data/ir_cron_data.xml',
+
         'views/dashboard_kpi_snapshot_views.xml',
         'views/dashboard_menus.xml',
     ],
 
     'assets': {
         'web.assets_backend': [
-            # 1. Estilos primero
             'shareholder_intelligence_hub/static/src/scss/dashboard.scss',
-
-            # 2. Plantillas XML (Cargadas ANTES del JS para que OWL reconozca los t-name)
             'shareholder_intelligence_hub/static/src/xml/dashboard_templates.xml',
-
-            # 3. Componentes JS ordenados por dependencia
             'shareholder_intelligence_hub/static/src/js/kpi_card.js',
             'shareholder_intelligence_hub/static/src/js/chart_waterfall.js',
             'shareholder_intelligence_hub/static/src/js/chart_aging.js',
             'shareholder_intelligence_hub/static/src/js/dashboard.js',
         ],
     },
+
+    'images': [
+        'static/description/banner.png',
+    ],
+
+    'price': 199.00,
+    'currency': 'USD',
+    'support': 'support@sutraatechnosoft.com',
+
     'installable': True,
     'application': True,
     'auto_install': False,

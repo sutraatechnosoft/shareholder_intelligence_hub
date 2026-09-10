@@ -5,9 +5,12 @@ import { loadJS } from "@web/core/assets";
 
 export class ChartWaterfall extends Component {
     static template = "shareholder_intelligence_hub.ChartWaterfall";
+
+
     static props = {
         labels: Array,
         values: Array,
+        isTotal: Array,  // marks bars that represent a running total
     };
 
     setup() {
@@ -28,26 +31,17 @@ export class ChartWaterfall extends Component {
         });
     }
 
-    _buildWaterfallData(labels, values) {
+    _buildWaterfallData(labels, values, isTotalArr) {
         let runningTotal = 0;
         const floors = [];
         const bars = [];
-        const isTotalFlags = [];
-
         (values || []).forEach((v, index) => {
-            const label = (labels && labels[index]) ? labels[index].toLowerCase() : "";
-            
-            // Detecta si es una columna de subtotal/total
-            const isTotal = label.includes("margen bruto") || label.includes("ebitda");
-            isTotalFlags.push(isTotal);
-
+            const isTotal = !!(isTotalArr && isTotalArr[index]);
             if (isTotal) {
-                // Las barras de total nacen en 0 y suben hasta su valor real
                 floors.push(0);
                 bars.push(Math.abs(v));
                 runningTotal = v;
             } else {
-                // Las barras de variación (COGS/OPEX) flotan desde el acumulado anterior
                 const start = runningTotal;
                 const end = runningTotal + v;
                 floors.push(Math.min(start, end));
@@ -55,30 +49,35 @@ export class ChartWaterfall extends Component {
                 runningTotal = end;
             }
         });
-
-        return { floors, bars, isTotalFlags };
+        return { floors, bars, isTotalFlags: isTotalArr || [] };
     }
 
     _renderChart(props) {
-        const { labels, values } = props || this.props;
+        const { labels, values, isTotal } = props || this.props;
         const ChartLib = window.Chart;
-
         if (!ChartLib || !this.canvasRef.el) {
             return;
         }
-
-        const { floors, bars, isTotalFlags } = this._buildWaterfallData(labels, values);
+        const { floors, bars, isTotalFlags } = this._buildWaterfallData(labels, values, isTotal);
 
         if (this.chart) {
             this.chart.destroy();
         }
 
-        // Asignación de colores: Azul/Gris para totales, Verde para aumentos, Rojo para costos/gastos
+        // Progressive monochromatic ramp for "total" bars (e.g. Revenue,
+        // Gross Margin, EBITDA), lightest to darkest in order of appearance.
+        const TOTAL_COLOR_RAMP = ["#5C6BC0", "#3949AB", "#1A237E"];
+        let totalIndex = 0;
+
         const barColors = (values || []).map((v, i) => {
             if (isTotalFlags[i]) {
-                return "#1E88E5"; // Azul para destacar subtotales y totales (Margen Bruto y EBITDA)
+                const color = TOTAL_COLOR_RAMP[
+                    Math.min(totalIndex, TOTAL_COLOR_RAMP.length - 1)
+                ];
+                totalIndex += 1;
+                return color;
             }
-            return v >= 0 ? "#2E7D32" : "#C62828"; // Verde para ingresos/positivos, Rojo para egresos
+            return v >= 0 ? "#2E7D32" : "#C62828"; 
         });
 
         this.chart = new ChartLib(this.canvasRef.el.getContext("2d"), {
@@ -93,7 +92,7 @@ export class ChartWaterfall extends Component {
                         stack: "waterfall",
                     },
                     {
-                        label: "valor",
+                        label: "Amount",
                         data: bars,
                         backgroundColor: barColors,
                         stack: "waterfall",
@@ -103,7 +102,24 @@ export class ChartWaterfall extends Component {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        // The "floor" dataset is an invisible helper used
+                        // only to position bars on the stack; it must never
+                        // surface in the tooltip.
+                        filter: (item) => item.datasetIndex !== 0,
+                        callbacks: {
+                            label: (item) => {
+                                const originalValue = (values || [])[item.dataIndex] ?? 0;
+                                const sign = originalValue > 0 ? "+" : "";
+                                return `${sign}${originalValue.toLocaleString("es-ES", {
+                                    maximumFractionDigits: 0,
+                                })}`;
+                            },
+                        },
+                    },
+                },
                 scales: {
                     x: { stacked: true },
                     y: { 

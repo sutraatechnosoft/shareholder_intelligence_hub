@@ -5,37 +5,28 @@ from odoo import fields, models
 class ResCompany(models.Model):
     _inherit = 'res.company'
 
-    # ------------------------------------------------------------------
-    # Umbrales configurables (Sección 8: dashboard_config.py + res_company.py
-    # trabajan juntos — los valores viven acá, la UI de Settings en
-    # dashboard_config.py).
-    # ------------------------------------------------------------------
     dashboard_ebitda_target = fields.Float(
-        string='Objetivo de Margen EBITDA (%)', default=25.0,
-        help='Umbral directivo de referencia. Ver Sección 4.1: '
-             '"Objetivo directivo: > 25.0%".',
+        string='EBITDA Margin Target (%)', default=25.0,
+        help='Management benchmark threshold. See Section 4.1: '
+             '"Management target: > 25.0%".',
     )
     dashboard_cash_runway_target_months = fields.Float(
-        string='Runway Objetivo (meses)', default=6.0,
+        string='Target Cash Runway (months)', default=6.0,
     )
 
-    # ------------------------------------------------------------------
-    # Consolidación multi-compañía (Sección 6.1: método de conversión y
-    # eliminaciones intercompañía deben quedar explícitos, no implícitos).
-    # ------------------------------------------------------------------
     dashboard_fx_method = fields.Selection(
         selection=[
-            ('closing', 'Tipo de cambio de cierre'),
-            ('average', 'Tipo de cambio promedio del período'),
+            ('closing', 'Closing exchange rate'),
+            ('average', 'Period average exchange rate'),
         ],
-        string='Método de Conversión FX', default='closing',
-        help='Método usado al consolidar filiales con moneda distinta a '
-             'la moneda corporativa. Ver Sección 6.1.',
+        string='FX Conversion Method', default='closing',
+        help='Method used when consolidating subsidiaries with a currency '
+             'different from the corporate currency. See Section 6.1.',
     )
     dashboard_eliminate_intercompany = fields.Boolean(
-        string='Eliminar Transacciones Intercompañía',
+        string='Eliminate Intercompany Transactions',
         default=True,
-        help='Si está activo, las ventas/compras entre filiales del mismo '
-             'grupo se excluyen del consolidado para no inflar el ingreso '
-             'artificialmente (Sección 6.1).',
+        help='If active, sales/purchases between subsidiaries of the same '
+             'group are excluded from the consolidated view to avoid artificially '
+             'inflating revenue (Section 6.1).',
     )

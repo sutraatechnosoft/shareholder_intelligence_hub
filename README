@@ -1,57 +1,91 @@
-# Executive Dashboard — Odoo KPI Module
+# Kpix Dashboard — Odoo KPI Module
 
-An Odoo module that provides an executive KPI dashboard, designed for shareholders and the board of directors. It lets you visualize key business indicators directly from Odoo's accounting data, without needing to export reports manually.
+An Odoo module that provides a board-ready executive KPI dashboard, designed
+for shareholders and the board of directors. It turns Odoo's accounting data
+into pre-calculated financial indicators, without needing to export reports
+manually or wait on heavy live aggregations every time the dashboard loads.
 
 ## Description
 
-This module builds a business intelligence layer on top of Odoo's native accounting models (`account.move.line`, `account.move`, `account.account`), calculating and presenting financial KPIs relevant for board-level decision making.
+This module builds a business intelligence layer on top of Odoo's native
+accounting models (`account.move.line`, `account.move`, `account.account`),
+pre-computing and storing financial KPIs in snapshot records so the dashboard
+loads instantly instead of recalculating from the ledger on every page view.
 
-## Features
+## Key Features
 
-- Dashboard with financial KPIs calculated in real time from accounting data
-- Views oriented toward an executive audience (shareholders, board), not just accounting
-- Built on Odoo's standard models — no need to duplicate or migrate accounting data
+- Pre-calculated KPI snapshots (no live recalculation on page load)
+- Revenue, gross margin, EBITDA, net profit, ROE and ROA
+- D&A properly isolated from OPEX for accurate EBITDA calculation
+- Year-over-year comparisons for all headline KPIs
+- Accounts receivable and payable aging in 30-day brackets
+- Cash runway estimate based on current burn rate
+- Automatic hourly KPI snapshots via a scheduled action
+- Configurable EBITDA and runway targets per company (Settings)
+- Dedicated read-only Executive/Shareholder security group
+- Per-company record-level access via `ir.rule`
+- Built on Odoo's standard accounting models — no data duplication or migration
 
 ## Requirements
 
-- Odoo 19
+- Odoo 19.0 (Community or Enterprise)
 - PostgreSQL 16
-- Accounting module (`account`) installed with data loaded
+- The `account` module installed with data loaded
+- No Odoo Enterprise dependency required
 
 ## Installation
 
-1. Copy this folder into your Odoo instance's addons directory (`addons/` or the path configured in `addons_path`)
+1. Copy the `shareholder_intelligence_hub` folder into your Odoo instance's
+   addons directory (`addons/`, or the path configured in `addons_path`)
 2. Restart the Odoo server
 3. Enable developer mode and go to **Apps → Update Apps List**
-4. Search for "Executive Dashboard" and install the module
+4. Search for "Kpix for Odoo" and install the module
 
 ## Local development
 
-This project uses Docker for the development environment:
+This project uses Docker for the development environment. See
+`docker-compose.yml` and `odoo.conf` at the project root — they define the
+`db` (PostgreSQL 16) and `odoo` (Odoo 19) services, exposed ports
+(`8069`, `8072`), and the volume mount for `custom_addons/`.
 
 ```bash
-docker pull odoo:19
-docker pull postgres:16
+docker compose up -d
 ```
 
-(Fill in the specific steps for your `docker-compose.yml` once it's set up: services, environment variables, exposed ports.)
+To upgrade the module after a code change to any `.xml`, `.py` or security
+file:
+
+```bash
+docker compose exec odoo odoo -u shareholder_intelligence_hub -d <your_db_name> \
+    --db_host=db --db_user=odoo --db_password=odoo --stop-after-init
+docker compose restart odoo
+```
 
 ## Module structure
 
 ```
-executive_dashboard/
+shareholder_intelligence_hub/
 ├── __init__.py
 ├── __manifest__.py
+├── controllers/
+├── data/
 ├── models/
-├── views/
 ├── security/
-└── static/
+├── static/
+│   ├── description/
+│   └── src/
+│       ├── js/
+│       ├── scss/
+│       └── xml/
+├── tests/
+└── views/
 ```
 
 ## Project status
 
-Under active development — not production-ready yet.
+Stable — actively used and tested against Odoo 19.0 Community
+(19.0-20260803).
 
 ## License
 
-_To be defined._
+OPL-1 (Odoo Proprietary License v1.0).

@@ -20,7 +20,7 @@
     <t t-name="shareholder_intelligence_hub.Dashboard">
         <div class="sih-dashboard">
             <div class="sih-dashboard__header">
-                <h2>Executive Dashboard</h2>
+                <h2>KPIX Dashboard</h2>
                 <select t-if="state.companies.length"
                         t-on-change="onCompanyChange"
                         class="sih-dashboard__company-select">
@@ -33,38 +33,36 @@
                 </select>
             </div>
             <div t-if="state.loading" class="sih-dashboard__loading">
-                Cargando KPIs...
+                Loading KPIs...
             </div>
             <div t-elif="!state.found" class="sih-dashboard__empty">
-                Todavía no hay un snapshot calculado para esta compañía.
-                El cron corre cada hora — espera al próximo ciclo o dispáralo
-                manualmente desde Ajustes → Técnico → Acciones Programadas.
+                No KPI snapshot has been calculated for this company yet. The cron runs hourly — wait for the next cycle or trigger it manually from Settings → Technical → Scheduled Actions.
             </div>
             <div t-else="" class="sih-dashboard__content">
                 <div class="sih-dashboard__cards">
-                    <KpiCard title="'Ingresos Acumulados (YTD)'"
+                    <KpiCard title="'YTD Revenue'"
                              value="this.formatCurrency(state.data.kpis.revenue_ytd)"
                              subtitle="this.formatYoY(state.data.kpis.revenue_yoy_growth)"/>
-                    <KpiCard title="'Margen EBITDA'"
+                    <KpiCard title="'EBITDA Margin'"
                              value="this.formatPercent(state.data.kpis.ebitda_margin)"
-                             subtitle="'Objetivo: &gt; ' + this.formatPercent(state.data.kpis.ebitda_target) + ' · ' + this.formatYoY(state.data.kpis.ebitda_yoy_growth)"
+                             subtitle="'Target: &gt; ' + this.formatPercent(state.data.kpis.ebitda_target) + ' · ' + this.formatYoY(state.data.kpis.ebitda_yoy_growth)"
                              status="state.data.kpis.ebitda_margin_on_target ? 'good' : 'warning'"/>
-                    <KpiCard title="'Flujo de Caja Disponible'"
+                    <KpiCard title="'Available Cash Flow'"
                              value="this.formatCurrency(state.data.kpis.cash_flow_available)"
-                             subtitle="'Runway: ' + state.data.kpis.runway_months.toFixed(1) + ' meses' + ' · ' + this.formatYoY(state.data.kpis.cash_flow_yoy_growth)"/>
+                             subtitle="'Runway: ' + state.data.kpis.runway_months.toFixed(1) + ' mos' + ' · ' + this.formatYoY(state.data.kpis.cash_flow_yoy_growth)"/>
                     <KpiCard title="'ROE'"
                              value="this.formatPercent(state.data.kpis.roe)"
                              subtitle="this.formatYoYPoints(state.data.kpis.roe_yoy_delta)"/>
                 </div>
                 <div class="sih-dashboard__waterfall">
-                    <h3>Estado de Resultados (P&amp;L)</h3>
-                    <ChartWaterfall labels="waterfallLabels" values="waterfallValues"/>
+                    <h3>Profit &amp; Loss (P&amp;L)</h3>
+                    <ChartWaterfall labels="waterfallLabels" values="waterfallValues" isTotal="waterfallIsTotal"/>
                 </div>
                 <div class="sih-dashboard__aging row g-3 mt-2">
                     <div class="col-md-6">
                         <div class="card p-3">
                             <div style="height: 250px;">
-                                <ChartAging title="'Antigüedad Cuentas por Cobrar (AR)'"
+                                <ChartAging title="'Accounts Receivable (AR) Aging'"
                                             labels="agingLabels"
                                             values="arAgingValues"/>
                             </div>
@@ -73,7 +71,7 @@
                     <div class="col-md-6">
                         <div class="card p-3">
                             <div style="height: 250px;">
-                                <ChartAging title="'Antigüedad Cuentas por Pagar (AP)'"
+                                <ChartAging title="'Accounts Payable (AP) Aging'"
                                             labels="agingLabels"
                                             values="apAgingValues"
                                             color="'#dc3545'"/>

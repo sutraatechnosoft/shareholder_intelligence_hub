@@ -21,10 +21,9 @@
         <field name="model">dashboard.kpi.snapshot</field>
         <field name="arch" type="xml">
             <form string="KPI Snapshot">
-                <!-- BARRA SUPERIOR CON BOTÓN DE RECÁLCULO -->
                 <header>
                     <button name="action_recompute_kpis" 
-                            string="Recalcular KPIs" 
+                            string="Recompute KPIs" 
                             type="object" 
                             class="oe_highlight" 
                             icon="fa-refresh"/>

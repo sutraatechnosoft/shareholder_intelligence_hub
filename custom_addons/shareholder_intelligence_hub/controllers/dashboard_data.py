@@ -2,13 +2,17 @@
 # -*- coding: utf-8 -*-
 from odoo import http
 from odoo.http import request
-import datetime
 
 class DashboardDataController(http.Controller):
 
     @http.route('/shareholder_intelligence_hub/kpis', type='jsonrpc', auth='user')
     def get_latest_kpis(self, company_id=None):
         company_id = int(company_id) if company_id else request.env.company.id
+
+        allowed_company_ids = request.env.user.company_ids.ids
+        if company_id not in allowed_company_ids:
+            return {'found': False}
+
         company = request.env['res.company'].browse(company_id)
 
         Snapshot = request.env['dashboard.kpi.snapshot']

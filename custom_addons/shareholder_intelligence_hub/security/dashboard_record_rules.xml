@@ -1,27 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data noupdate="0">
-        <!-- Restricción a nivel de registro, no solo de menú (Sección 6.2):
-             un usuario solo ve snapshots de las compañías a las que tiene
-             acceso vía el selector multi-compañía estándar de Odoo
-             (res.users.company_ids). Esto evita que un accionista de una
-             filial vea la consolidación completa u otras filiales. -->
-        <record id="rule_dashboard_kpi_snapshot_company" model="ir.rule">
-            <field name="name">Dashboard KPI Snapshot: multi-compañía</field>
-            <field name="model_id" ref="model_dashboard_kpi_snapshot"/>
+    <data noupdate="1">
+
+        <record id="rule_dashboard_kpi_snapshot_shareholder_company"
+                model="ir.rule">
+            <field name="name">
+                Dashboard KPI Snapshot: allowed companies
+            </field>
+
+            <field name="model_id"
+                   ref="model_dashboard_kpi_snapshot"/>
+
             <field name="domain_force">
                 [('company_id', 'in', company_ids)]
             </field>
-            <field name="groups" eval="[(4, ref('group_executive_shareholder'))]"/>
+
+            <field name="groups"
+                   eval="[(4, ref('group_executive_shareholder'))]"/>
+
+            <field name="perm_read" eval="1"/>
+            <field name="perm_write" eval="0"/>
+            <field name="perm_create" eval="0"/>
+            <field name="perm_unlink" eval="0"/>
         </record>
 
-        <!-- El grupo administrador sí ve todas las compañías (necesario
-             para configurar y auditar el módulo en el consolidado). -->
-        <record id="rule_dashboard_kpi_snapshot_admin_all" model="ir.rule">
-            <field name="name">Dashboard KPI Snapshot: admin ve todo</field>
-            <field name="model_id" ref="model_dashboard_kpi_snapshot"/>
-            <field name="domain_force">[(1, '=', 1)]</field>
-            <field name="groups" eval="[(4, ref('group_executive_shareholder_admin'))]"/>
+        <record id="rule_dashboard_kpi_snapshot_admin_all"
+                model="ir.rule">
+            <field name="name">
+                Dashboard KPI Snapshot: admin sees all
+            </field>
+
+            <field name="model_id"
+                   ref="model_dashboard_kpi_snapshot"/>
+
+            <field name="domain_force">
+                [(1, '=', 1)]
+            </field>
+
+            <field name="groups"
+                   eval="[(4, ref('group_executive_shareholder_admin'))]"/>
+
+            <field name="perm_read" eval="1"/>
+            <field name="perm_write" eval="1"/>
+            <field name="perm_create" eval="1"/>
+            <field name="perm_unlink" eval="1"/>
         </record>
+
     </data>
 </odoo>

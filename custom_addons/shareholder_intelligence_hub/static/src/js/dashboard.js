@@ -38,11 +38,12 @@ export class ShareholderIntelligenceHubDashboard extends Component {
         });
         this.state.found = result.found;
         this.state.data = result.found ? result : null;
-        if (result.found) {
-            this.state.selectedCompanyId = result.company_id;
-        }
+        
+        this.state.selectedCompanyId = companyId || result.company_id || null;
+
         this.state.loading = false;
     }
+    
 
     async onCompanyChange(ev) {
         const companyId = parseInt(ev.target.value, 10);
@@ -65,17 +66,17 @@ export class ShareholderIntelligenceHubDashboard extends Component {
     formatYoY(value) {
         if (value === undefined || value === null) return "YoY: -";
         const sign = value >= 0 ? "+" : "";
-        return `YoY: ${sign}${value.toFixed(1)}% vs año anterior`;
+        return `YoY: ${sign}${value.toFixed(1)}% vs prior year`;
     }
 
     formatYoYPoints(value) {
         if (value === undefined || value === null) return "YoY: -";
         const sign = value >= 0 ? "+" : "";
-        return `YoY: ${sign}${value.toFixed(1)} p.p. vs año anterior`;
+        return `YoY: ${sign}${value.toFixed(1)}% vs prior year`;
     }
 
     get waterfallLabels() {
-        return ["Ingresos", "COGS", "Margen Bruto", "OPEX", "EBITDA"];
+        return ["Revenue", "COGS", "Gross Margin", "OPEX", "EBITDA"];
     }
 
     get waterfallValues() {
@@ -83,9 +84,12 @@ export class ShareholderIntelligenceHubDashboard extends Component {
         if (!w) return [];
         return [w.revenue, w.cogs, w.gross_margin, w.opex, w.ebitda];
     }
+    get waterfallIsTotal() {
+        return [true, false, true, false, true];  
+    }
 
     get agingLabels() {
-        return ["0-30 días", "31-60 días", "61-90 días", "+90 días"];
+        return ["0-30 days", "31-60 days", "61-90 days", "+90 days"];
     }
 
     get arAgingValues() {

@@ -34,7 +34,7 @@ export class ChartAging extends Component {
             data: {
                 labels: this.props.labels,
                 datasets: [{
-                    label: 'Monto ($)',
+                    label: 'Amount ($)',
                     data: this.props.values,
                     backgroundColor: this.props.color ? [this.props.color, this.props.color, this.props.color, '#dc3545'] : defaultColors,
                     borderRadius: 4,

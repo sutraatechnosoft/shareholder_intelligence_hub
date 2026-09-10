@@ -1,26 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <record id="action_shareholder_intelligence_hub" model="ir.actions.client">
-        <field name="name">Executive Dashboard</field>
+        <field name="name">KPIX Dashboard</field>
         <field name="tag">shareholder_intelligence_hub.dashboard</field>
     </record>
 
     <menuitem id="menu_shareholder_intelligence_hub_root"
-              name="Executive Dashboard"
+              name="KPIX Dashboard"
               sequence="5"
               web_icon="shareholder_intelligence_hub,static/description/icon.png"
               groups="shareholder_intelligence_hub.group_executive_shareholder"/>
 
     <menuitem id="menu_shareholder_intelligence_hub_main"
-              name="Dashboard"
+              name="KPIX Dashboard"
               parent="menu_shareholder_intelligence_hub_root"
               action="action_shareholder_intelligence_hub"
               sequence="1"
               groups="shareholder_intelligence_hub.group_executive_shareholder"/>
 
-    <!-- Vista técnica de los snapshots crudos -->
     <menuitem id="menu_shareholder_intelligence_hub_snapshots"
-              name="KPI Snapshots (Técnico)"
+              name="KPI Snapshots (Technical)"
               parent="menu_shareholder_intelligence_hub_root"
               action="action_dashboard_kpi_snapshot"
               sequence="99"

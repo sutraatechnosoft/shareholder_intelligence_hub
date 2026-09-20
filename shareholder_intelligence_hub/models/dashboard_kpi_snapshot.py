@@ -351,25 +351,31 @@ class DashboardKpiSnapshot(models.Model):
 
 
     def _compute_aging(self, company, as_of_date, account_types):
-        AccountMoveLine = self.env['account.move.line']
-        domain = [
-            ('company_id', '=', company.id),
-            ('move_id.state', '=', 'posted'),
-            ('account_id.account_type', 'in', list(account_types)),
-            ('reconciled', '=', False),
-            ('date_maturity', '!=', False),
-        ]
-        lines = AccountMoveLine.search(domain)
         buckets = {'0_30': 0.0, '31_60': 0.0, '61_90': 0.0, '90_plus': 0.0}
-        for line in lines:
-            days_overdue = (as_of_date - line.date_maturity).days
-            amount = abs(line.amount_residual)
-            if days_overdue <= 30:
-                buckets['0_30'] += amount
-            elif days_overdue <= 60:
-                buckets['31_60'] += amount
-            elif days_overdue <= 90:
-                buckets['61_90'] += amount
-            else:
-                buckets['90_plus'] += amount
+        for acc_type in account_types:
+            domain = [
+                ('company_id', '=', company.id),
+                ('move_id.state', '=', 'posted'),
+                ('account_id.account_type', '=', acc_type),
+                ('reconciled', '=', False),
+                ('date_maturity', '!=', False),
+            ]
+            data = self.env['account.move.line']._read_group(
+                domain,
+                groupby=['date_maturity'],
+                aggregates=['amount_residual:sum'],
+            )
+            for date_maturity, amount_sum in data:
+                if not date_maturity:
+                    continue
+                days = (as_of_date - date_maturity).days
+                amount = abs(amount_sum or 0.0)
+                if days <= 30:
+                    buckets['0_30'] += amount
+                elif days <= 60:
+                    buckets['31_60'] += amount
+                elif days <= 90:
+                    buckets['61_90'] += amount
+                else:
+                    buckets['90_plus'] += amount
         return buckets

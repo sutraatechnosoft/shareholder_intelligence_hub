@@ -1,65 +1,76 @@
+// Odoo Web & Dark Mode Compatible Styles
+
 .sih-dashboard {
     height: 100%;
     overflow-y: auto;
-    padding: 24px;
+    padding: $spacer * 1.5;
 
     &__header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 16px;
+        margin-bottom: $spacer;
     }
 
     &__cards {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 16px;
-        margin-bottom: 24px;
+        gap: $spacer;
+        margin-bottom: $spacer * 1.5;
     }
 
     &__loading, &__empty {
-        padding: 40px;
+        padding: $spacer * 2.5;
         text-align: center;
-        color: #6c757d;
+        color: var(--text-muted, $text-muted);
     }
 
     &__waterfall {
-        background: #fff;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        padding: 16px;
+        background-color: var(--o-view-background-color, $white);
+        border: 1px solid var(--border-color, $border-color);
+        border-radius: $border-radius-lg;
+        padding: $spacer;
     }
 }
 
 .sih-kpi-card {
-    border: 1px solid #e0e0e0;
-    border-left: 4px solid #9e9e9e;
-    border-radius: 6px;
-    padding: 16px;
-    background: #fff;
+    border: 1px solid var(--border-color, $border-color);
+    border-left: 4px solid var(--text-muted, $gray-500);
+    border-radius: $border-radius;
+    padding: $spacer;
+    background-color: var(--o-view-background-color, $white);
 
-    &--good { border-left-color: #2E7D32; }
-    &--warning { border-left-color: #F9A825; }
-    &--bad { border-left-color: #C62828; }
+    &--good { 
+        border-left-color: var(--success, $success); 
+    }
+    &--warning { 
+        border-left-color: var(--warning, $warning); 
+    }
+    &--bad { 
+        border-left-color: var(--danger, $danger); 
+    }
 
     &__title {
-        font-size: 0.85rem;
-        color: #6c757d;
+        font-size: $font-size-sm;
+        color: var(--text-muted, $text-muted);
         text-transform: uppercase;
+        font-weight: $font-weight-bold;
     }
 
     &__value {
-        font-size: 1.6rem;
-        font-weight: 600;
-        margin: 4px 0;
+        font-size: $h2-font-size;
+        font-weight: $font-weight-bolder;
+        margin: $spacer * 0.25 0;
+        color: var(--body-color, $body-color);
     }
 
     &__subtitle {
-        font-size: 0.8rem;
-        color: #9e9e9e;
+        font-size: $font-size-sm * 0.9;
+        color: var(--text-muted, $text-muted);
     }
 }
 
 .sih-chart-waterfall {
-    height: 320px;
+    min-height: 320px;
+    height: 100%;
 }

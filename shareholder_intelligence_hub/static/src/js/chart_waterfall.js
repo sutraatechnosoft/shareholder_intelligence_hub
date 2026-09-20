@@ -2,10 +2,10 @@
 
 import { Component, useRef, onMounted, onWillUnmount, onWillUpdateProps } from "@odoo/owl";
 import { loadJS } from "@web/core/assets";
+import { user } from "@web/core/user";
 
 export class ChartWaterfall extends Component {
     static template = "shareholder_intelligence_hub.ChartWaterfall";
-
 
     static props = {
         labels: Array,
@@ -18,7 +18,9 @@ export class ChartWaterfall extends Component {
         this.chart = null;
 
         onMounted(async () => {
-            await loadJS("/web/static/lib/Chart/Chart.js").catch(() => {});
+            if (typeof window.Chart === "undefined") {
+                await loadJS("/web/static/lib/Chart/Chart.js").catch(() => {});
+            }
             this._renderChart();
         });
 
@@ -27,6 +29,7 @@ export class ChartWaterfall extends Component {
         onWillUnmount(() => {
             if (this.chart) {
                 this.chart.destroy();
+                this.chart = null;
             }
         });
     }
@@ -64,8 +67,6 @@ export class ChartWaterfall extends Component {
             this.chart.destroy();
         }
 
-        // Progressive monochromatic ramp for "total" bars (e.g. Revenue,
-        // Gross Margin, EBITDA), lightest to darkest in order of appearance.
         const TOTAL_COLOR_RAMP = ["#5C6BC0", "#3949AB", "#1A237E"];
         let totalIndex = 0;
 
@@ -79,6 +80,9 @@ export class ChartWaterfall extends Component {
             }
             return v >= 0 ? "#2E7D32" : "#C62828"; 
         });
+
+        // Detectar locale del usuario activo en Odoo
+        const userLocale = user.lang ? user.lang.replace('_', '-') : undefined;
 
         this.chart = new ChartLib(this.canvasRef.el.getContext("2d"), {
             type: "bar",
@@ -105,15 +109,12 @@ export class ChartWaterfall extends Component {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        // The "floor" dataset is an invisible helper used
-                        // only to position bars on the stack; it must never
-                        // surface in the tooltip.
                         filter: (item) => item.datasetIndex !== 0,
                         callbacks: {
                             label: (item) => {
                                 const originalValue = (values || [])[item.dataIndex] ?? 0;
                                 const sign = originalValue > 0 ? "+" : "";
-                                return `${sign}${originalValue.toLocaleString("es-ES", {
+                                return `${sign}${originalValue.toLocaleString(userLocale, {
                                     maximumFractionDigits: 0,
                                 })}`;
                             },

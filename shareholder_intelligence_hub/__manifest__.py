@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-
 {
-    'name': 'Kpix for Odoo',
+    'name': 'Kpix Financial Dashboard',
     'version': '19.0.1.0.0',
     'summary': 'Board-ready financial dashboard with pre-calculated KPIs',
-
     'description': """
 KPIX Dashboard
+==============
 
 Turn Odoo's accounting data into a board-ready financial dashboard
 without recalculating large amounts of accounting data on every page load.
@@ -36,11 +35,9 @@ Requirements
 Depends on the standard Odoo Account module.
 No Enterprise dependency is required.
 """,
-
     'author': 'Sutraa Technosoft',
     'website': 'https://sutraatechnosoft.com',
     'license': 'OPL-1',
-
     'category': 'Accounting/Accounting',
 
     'depends': [
@@ -52,9 +49,7 @@ No Enterprise dependency is required.
         'security/security_groups.xml',
         'security/ir.model.access.csv',
         'security/dashboard_record_rules.xml',
-
         'data/ir_cron_data.xml',
-
         'views/dashboard_kpi_snapshot_views.xml',
         'views/dashboard_menus.xml',
     ],

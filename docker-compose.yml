@@ -30,9 +30,9 @@ services:
       PASSWORD: odoo
       ADMIN_PASSWD: odoo
     volumes:
-      - odoo-web-data:/var/lib/odoo
-      - ./custom_addons:/mnt/extra-addons
-      - ./odoo.conf:/etc/odoo/odoo.conf
+          - odoo-web-data:/var/lib/odoo
+          - .:/mnt/extra-addons
+          - ./odoo.conf:/etc/odoo/odoo.conf
 
 volumes:
   odoo-db-data:

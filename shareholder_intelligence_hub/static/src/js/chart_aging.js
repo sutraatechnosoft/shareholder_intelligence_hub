@@ -9,6 +9,7 @@ export class ChartAging extends Component {
         values: { type: Array },
         title: { type: String },
         color: { type: String, optional: true },
+        currencySymbol: { type: String, optional: true },
     };
 
     setup() {
@@ -16,7 +17,9 @@ export class ChartAging extends Component {
         this.chart = null;
 
         onMounted(async () => {
-            await loadJS("/web/static/lib/Chart/Chart.js").catch(() => {});
+            if (typeof window.Chart === "undefined") {
+                await loadJS("/web/static/lib/Chart/Chart.js").catch(() => {});
+            }
             this._renderChart();
         });
         onWillUpdateProps((nextProps) => this._updateChart(nextProps));
@@ -26,15 +29,17 @@ export class ChartAging extends Component {
     _renderChart() {
         const ChartLib = window.Chart;
         if (!ChartLib || !this.canvasRef.el) return;
+
         const ctx = this.canvasRef.el.getContext("2d");
         const defaultColors = ['#28a745', '#ffc107', '#fd7e14', '#dc3545'];
+        const currencyLabel = this.props.currencySymbol ? `Amount (${this.props.currencySymbol})` : 'Amount';
 
         this.chart = new ChartLib(ctx, {
             type: 'bar',
             data: {
                 labels: this.props.labels,
                 datasets: [{
-                    label: 'Amount ($)',
+                    label: currencyLabel,
                     data: this.props.values,
                     backgroundColor: this.props.color ? [this.props.color, this.props.color, this.props.color, '#dc3545'] : defaultColors,
                     borderRadius: 4,

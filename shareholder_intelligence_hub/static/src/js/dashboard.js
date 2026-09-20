@@ -2,16 +2,20 @@
 
 import { Component, useState, onWillStart } from "@odoo/owl";
 import { registry } from "@web/core/registry";
-import { rpc } from "@web/core/network/rpc";
-import { KpiCard } from "@shareholder_intelligence_hub/js/kpi_card";
-import { ChartWaterfall } from "@shareholder_intelligence_hub/js/chart_waterfall";
-import { ChartAging } from "@shareholder_intelligence_hub/js/chart_aging";
+import { rpc } from "@web/core/network/rpc";   // ✅ importación directa
+import { user } from "@web/core/user";
+import { KpiCard } from "./kpi_card";
+import { ChartWaterfall } from "./chart_waterfall";
+import { ChartAging } from "./chart_aging";
 
 export class ShareholderIntelligenceHubDashboard extends Component {
     static template = "shareholder_intelligence_hub.Dashboard";
     static components = { KpiCard, ChartWaterfall, ChartAging };
 
     setup() {
+        // ❌ elimina esta línea:
+        // this.rpc = useService("rpc");
+
         this.state = useState({
             loading: true,
             found: false,
@@ -19,6 +23,7 @@ export class ShareholderIntelligenceHubDashboard extends Component {
             companies: [],
             selectedCompanyId: null,
         });
+
         onWillStart(async () => {
             await this._loadCompanies();
             await this._loadKpis();
@@ -38,12 +43,10 @@ export class ShareholderIntelligenceHubDashboard extends Component {
         });
         this.state.found = result.found;
         this.state.data = result.found ? result : null;
-        
-        this.state.selectedCompanyId = companyId || result.company_id || null;
 
+        this.state.selectedCompanyId = companyId || result.company_id || null;
         this.state.loading = false;
     }
-    
 
     async onCompanyChange(ev) {
         const companyId = parseInt(ev.target.value, 10);
@@ -53,7 +56,8 @@ export class ShareholderIntelligenceHubDashboard extends Component {
     formatCurrency(value) {
         if (value === undefined || value === null) return "-";
         const symbol = this.state.data?.currency_symbol || "";
-        return `${symbol} ${value.toLocaleString("es-ES", {
+        const userLocale = user.lang ? user.lang.replace('_', '-') : undefined;
+        return `${symbol} ${value.toLocaleString(userLocale, {
             maximumFractionDigits: 0,
         })}`;
     }
@@ -84,6 +88,7 @@ export class ShareholderIntelligenceHubDashboard extends Component {
         if (!w) return [];
         return [w.revenue, w.cogs, w.gross_margin, w.opex, w.ebitda];
     }
+
     get waterfallIsTotal() {
         return [true, false, true, false, true];  
     }
@@ -104,3 +109,4 @@ export class ShareholderIntelligenceHubDashboard extends Component {
 registry
     .category("actions")
     .add("shareholder_intelligence_hub.dashboard", ShareholderIntelligenceHubDashboard);
+
